@@ -21,7 +21,7 @@ export default function PaidVideoCard({ video }: { video: video }) {
   const [fees, setFees] = useState(0);
   const { address } = useAccount();
   const { connect, connectors } = useConnect();
-  const [isPaid, setIsPaid] = useState(true);
+  const [isPaid, setIsPaid] = useState(false);
   const [loading, setIsLoading] = useState(false);
 
   const handlePay = async () => {

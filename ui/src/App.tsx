@@ -10,6 +10,7 @@ import Play from "@/pages/play";
 import Governance from "./pages/governance";
 import Onboard from "./pages/onboard";
 import Login from "./pages/login";
+import UploadVideo from "./pages/upload-video";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/play" element={<Play />} />
               <Route path="/governance" element={<Governance />} />
+              <Route path="/upload-video" element={<UploadVideo />} />
             </Routes>
           </Router>
         </QueryClientProvider>
