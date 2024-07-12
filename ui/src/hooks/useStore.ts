@@ -4,7 +4,7 @@ import { videoData } from '@/components/videos/video-data'
 
 interface User {
     id: number,
-    email: string
+    username: string
 }
 
 interface UserState {

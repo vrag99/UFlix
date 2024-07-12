@@ -2,6 +2,9 @@ export interface video {
     id: string;
     title: string;
     description: string;
+    type: 'free' | 'paid',
+    price?: number;
+    tag: string;
     thumbnail: string;
     ipfsHash: string;
     likes: number;

@@ -2,6 +2,7 @@
 import videojs from "video.js";
 import "video.js/dist/video-js.css";
 import Player from "video.js/dist/types/player";
+import { useRef } from "react";
 
 export function VideoComponent({ ipfsHash }: { ipfsHash: string }) {
   const playerRef = useRef<Player | null>(null);

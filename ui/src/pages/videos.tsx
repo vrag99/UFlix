@@ -1,11 +1,12 @@
-import NavBar from "@/components/navbar";
 import Trending from "@/components/videos/trending";
+import PanelWrapper from "@/components/ui/panel-wrapper";
 
 export default function Videos() {
   return (
-    <div className="h-screen w-[72vw] mx-auto pt-4 text-left">
-      <NavBar />
-      <Trending />
-    </div>
+    <>
+      <PanelWrapper>
+        <Trending />
+      </PanelWrapper>
+    </>
   );
 }

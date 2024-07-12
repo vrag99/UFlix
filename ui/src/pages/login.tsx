@@ -1,4 +1,4 @@
-import LoginCard from "@/components/login";
+import LoginCard from "@/components/login-card";
 import loginBg from "@/assets/login-bg.jpg";
 
 export default function Login() {

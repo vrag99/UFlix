@@ -1,8 +1,9 @@
 import axios from "axios";
 import { useEffect } from "react";
 import { GET_VIDEOS_API } from "@/lib/endpoints";
-import { Link } from "react-router-dom";
 import { useVideoDataStore } from "@/hooks/useStore";
+import FreeVideoCard from "./free-video-card";
+import PaidVideoCard from "./paid-video-card";
 
 export default function Trending() {
   useEffect(() => {
@@ -21,31 +22,24 @@ export default function Trending() {
     fetchVideos();
   });
 
-  const {videos: videoData} = useVideoDataStore();
+  const { videos: videoData } = useVideoDataStore();
 
   useEffect(() => {
     console.log(videoData);
-  }, [videoData])
-  
+  }, [videoData]);
+
   return (
     <div className="mt-4">
       <h1 className="text-xl font-bold">Trending Today</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols:4 gap-4">
-        {videoData.map((video) => (
-          <Link to={`/play?v=${video.id}`}>
-            <div key={video.id} className="py-4 rounded-md ">
-              <img
-                src={video.thumbnail}
-                alt={video.title}
-                className="w-full h-40 object-cover rounded-md"
-              />
-              <h2 className="text-lg font-semibold mt-2">{video.title}</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                {video.description}
-              </p>
-              <p className="mt-2 text-base text-primary"> {video.username}</p>
-            </div>
-          </Link>
+      <div className="grid grid-cols-1 md:grid-cols-3 md:gap-4 lg:grid-cols:4 lg:gap-5">
+        {videoData.map((video, index) => (
+          <>
+            {video.type === "free" ? (
+              <FreeVideoCard key={index} video={video} />
+            ) : (
+              <PaidVideoCard key={index} video={video} />
+            )}
+          </>
         ))}
       </div>
     </div>
