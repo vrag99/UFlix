@@ -1,0 +1,6 @@
+.env.development.local
+node_modules/
+npm-debug.log
+src/logs/
+.env.production
+market_data/venv/

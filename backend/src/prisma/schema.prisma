@@ -1,0 +1,66 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+}
+
+enum kycStatus {
+  INTIALISED
+  INPROCESS
+  APPROVED
+  REJECTED
+  NOTSUBMITTED
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  username      String    @unique
+  emailVerified Boolean   @default(false)
+  video         Video[]
+  likes         Like[]
+  comments      Comment[]
+}
+
+model OTP {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  createdAt DateTime @default(now())
+  email    String
+}
+
+model Video {
+  id          Int       @id @default(autoincrement())
+  ipfsHashThumbnail   String   
+  uploader   User      @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  uploaderId Int
+  comments   Comment[]
+  likes      Like[]
+  likeCount  Int       @default(0)
+  blockChainId Int
+  Title String
+  Description String
+}
+
+model Like {
+  id      Int    @id @default(autoincrement())
+  liker   String
+  video   Video  @relation(fields: [videoId], references: [id])
+  videoId Int
+  user    User   @relation(fields: [userId], references: [id])
+  userId  Int
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  comment   String
+  createdAt DateTime @default(now())
+  video     Video    @relation(fields: [videoId], references: [id])
+  videoId   Int
+  by        User     @relation(fields: [userId], references: [id])
+  userId    Int
+}
