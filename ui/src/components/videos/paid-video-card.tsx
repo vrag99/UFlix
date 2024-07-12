@@ -9,10 +9,26 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import VideoCard from "./commons/video-card";
+import { type video } from "@/lib/types";
+import { useState } from "react";
+import { useAccount, useConnect } from "wagmi";
+import metamaskIcon from "@/assets/metamask.svg";
+import Spinner from "../ui/spinner";
+import { Link } from "react-router-dom";
 
 export default function PaidVideoCard({ video }: { video: video }) {
+  const [fees, setFees] = useState(0);
+  const { address } = useAccount();
+  const { connect, connectors } = useConnect();
+  const [isPaid, setIsPaid] = useState(true);
+  const [loading, setIsLoading] = useState(false);
+
+  const handlePay = async () => {
+    setIsLoading(true);
+    console.log("Paying fees...");
+    //Idhar likho logic
+  };
   return (
     <Dialog>
       <DialogTrigger className="text-left">
@@ -20,35 +36,45 @@ export default function PaidVideoCard({ video }: { video: video }) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit profile</DialogTitle>
+          <DialogTitle>
+            This Video is <span className="text-primary"> Paid</span>
+          </DialogTitle>
           <DialogDescription>
-            Make changes to your profile here. Click save when you're done.
+            You need to pay a fee to watch this video.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <Input
-              id="name"
-              defaultValue="Pedro Duarte"
-              className="col-span-3"
-            />
+        <div className="space-y-4">
+          <div className="w-full bg-muted rounded-md p-2 px-4 flex justify-between">
+            <p>Fees</p>
+            <p className="text-primary font-semibold">{fees} UBIT</p>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="username" className="text-right">
-              Username
-            </Label>
-            <Input
-              id="username"
-              defaultValue="@peduarte"
-              className="col-span-3"
-            />
+          <div className="flex flex-row gap-2">
+            <Input className="flex-1" type="text" value={address} readOnly />
+            <Button
+              onClick={() => connect({ connector: connectors[0] })}
+              size={"icon"}
+              variant={"outline"}
+              className=" text-white"
+            >
+              <img src={metamaskIcon} className="w-4" />
+            </Button>
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit">Save changes</Button>
+          {isPaid ? (
+            <Link to={`/video/${video.id}`}>
+              <Button
+                size={"lg"}
+                className="bg-emerald-500 hover:bg-emerald-600"
+              >
+                Watch Now
+              </Button>
+            </Link>
+          ) : (
+            <Button size={"lg"} onClick={handlePay} disabled={loading}>
+              {loading ? <Spinner className="w-4 h-4" /> : "Pay to Watch"}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
