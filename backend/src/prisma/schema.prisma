@@ -20,6 +20,7 @@ model User {
   id            Int       @id @default(autoincrement())
   email         String    @unique
   username      String    @unique
+  walletAddress String    
   emailVerified Boolean   @default(false)
   video         Video[]
   likes         Like[]
@@ -38,29 +39,32 @@ model Video {
   ipfsHashThumbnail   String   
   uploader   User      @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
   uploaderId Int
+  username  String
+  walletAddress String 
   comments   Comment[]
   likes      Like[]
   likeCount  Int       @default(0)
   blockChainId Int
   Title String
   Description String
+  paid Boolean
+  fees Float @default(0)
 }
 
 model Like {
-  id      Int    @id @default(autoincrement())
-  liker   String
-  video   Video  @relation(fields: [videoId], references: [id])
-  videoId Int
-  user    User   @relation(fields: [userId], references: [id])
+  video   Video  @relation(fields: [videoId], references: [id],onDelete: Cascade) 
+  videoId Int     
+  user    User   @relation(fields: [userId], references: [id],onDelete: Cascade)
   userId  Int
+  @@id([videoId, userId])
 }
 
 model Comment {
-  id        Int      @id @default(autoincrement())
   comment   String
   createdAt DateTime @default(now())
-  video     Video    @relation(fields: [videoId], references: [id])
+  video     Video    @relation(fields: [videoId], references: [id],onDelete: Cascade)
   videoId   Int
-  by        User     @relation(fields: [userId], references: [id])
+  by        User     @relation(fields: [userId], references: [id],onDelete: Cascade)
   userId    Int
+  @@id([videoId, userId])
 }

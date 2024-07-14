@@ -2,10 +2,14 @@ import { comment } from "@/lib/types";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { useState } from "react";
+import { useUserStore } from "@/hooks/useStore";
+import { useAccount } from "wagmi";
 
 export default function Comments({ comments }: { comments: comment[] }) {
-  const [commentSection, setComments] = useState<comment[]>(comments);
+  const [commentSection, setComments] = useState<comment[]>([]);
   const [commentText, setCommentText] = useState("");
+  const { user } = useUserStore();
+  const { address } = useAccount();
   return (
     <div className="w-fullrounded-md bg-card p-4">
       <h1 className="text-sm text-muted-foreground font-bold">Comments</h1>
@@ -25,8 +29,8 @@ export default function Comments({ comments }: { comments: comment[] }) {
                 ...commentSection,
                 {
                   text: commentText,
-                  username: "c1c4d4",
-                  address: "0x1234",
+                  username: user?.username || "Anonymous",
+                  address: address || '0x012134',
                 },
               ])
             }

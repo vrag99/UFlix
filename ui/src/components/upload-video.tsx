@@ -21,7 +21,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { ethers } from "ethers";
 import { toast } from "./ui/use-toast";
-import { useVideoDataStore } from "@/hooks/useStore";
 export default function UploadVideo() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -29,83 +28,9 @@ export default function UploadVideo() {
   const [video, setVideo] = useState<File>();
   const [ipfsHashContract, setIpfsHashContract] =
     useState<ethers.BaseContract | null>(null);
-  const contractAddress = "0xc4258543178792FAEe014be2bB36A09429AFE3c5";
   const [uploading, setUploading] = useState(false);
-  const abi = [
-    {
-      inputs: [
-        {
-          internalType: "string",
-          name: "_hash",
-          type: "string",
-        },
-      ],
-      name: "setHash",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function",
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "_user",
-          type: "address",
-        },
-      ],
-      name: "getHash",
-      outputs: [
-        {
-          internalType: "string",
-          name: "",
-          type: "string",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "",
-          type: "address",
-        },
-      ],
-      name: "user_hash",
-      outputs: [
-        {
-          internalType: "string",
-          name: "",
-          type: "string",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-  ];
+  
 
-  const { addVideo } = useVideoDataStore();
-
-  async function setHash(hash: string) {
-    if (!ipfsHashContract) return console.error("Contract not initialized");
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    // Some error
-    const tx = await ipfsHashContract.setHash(hash);
-    await tx.wait();
-    console.log(`Hash set to: ${hash}`);
-  }
-
-  useEffect(() => {
-    const privateKey =
-      import.meta.env.VITE_METAMASK_PVT_KEY;
-    const provider = new ethers.providers.JsonRpcProvider(
-      "https://mevm.devnet.m1.movementlabs.xyz"
-    );
-    const wallet = new ethers.Wallet(privateKey, provider);
-    setIpfsHashContract(new ethers.Contract(contractAddress, abi, wallet));
-  }, []);
 
   const thumbnailSubmit = async () => {
     const formData = new FormData();
@@ -142,17 +67,15 @@ export default function UploadVideo() {
       }
     );
     console.log(res);
-    setHash(res.data.hash);
     toast({
       description: "Video uploaded successfully",
     });
 
-    setUploading(false);
   }
 
 
   const handleSubmit = async () => {
-
+    setUploading(true);
     thumbnailSubmit()
       .then(async (val) => {
         await videoSubmit(val);

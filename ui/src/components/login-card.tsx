@@ -16,7 +16,7 @@ import Spinner from "@/components/ui/spinner";
 import { LOGIN_API } from "@/lib/endpoints";
 import {useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import axios, { Axios } from "axios";
 import { useUserStore } from "@/hooks/useStore";
 import { useAccount, useConnect } from "wagmi";
 import metamask from "@/assets/metamask.svg";
@@ -51,6 +51,7 @@ export default function LoginCard() {
         }
       )
       .then((res) => {
+        console.log("Res" , res)
         if (res.status === 200) {
           console.log("Logged In");
           toast({
@@ -61,11 +62,10 @@ export default function LoginCard() {
           navigate("/videos");
         }
       })
-      .catch((err) => {
-        console.error(err);
+      .catch((err ) => {
         toast({
           title: "Invalid Username or Password",
-          description: "Please check your credentials and try again.",
+          description: err.message ? "Please check your credentials and try again." : err.message,
           variant: "destructive",
         });
       })
@@ -73,6 +73,8 @@ export default function LoginCard() {
         setLoading(false);
       });
   };
+
+
   return (
     <>
       <Card className="w-[360px] backdrop-blur-lg bg-card/20">
@@ -118,6 +120,7 @@ export default function LoginCard() {
                   placeholder="0xh1th3r3"
                   required
                   value={address}
+                  readOnly
                 />
               </div>
               <Button

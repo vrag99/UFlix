@@ -3,7 +3,6 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  CardFooter,
   CardContent,
 } from "@/components/ui/card";
 
@@ -14,107 +13,37 @@ import { Button } from "@/components/ui/button";
 import Spinner from "./ui/spinner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-import woods from "@/assets/thumbnails/woods.png";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
-import { ethers } from "ethers";
 import { toast } from "./ui/use-toast";
-import { useVideoDataStore } from "@/hooks/useStore";
+
+import { videoABI } from "@/lib/ContractsVideo";
+import { VIDEO } from "@/lib/ContractAddress";
+import { config } from "@/wagmi-config";
+
+import { simulateContract, writeContract } from '@wagmi/core'
+import { deleteVideo, updateBlockChainData } from "@/lib/endpoints";
+import { useUserStore } from "@/hooks/useStore";
+
 
 export default function UploadVideoCard() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState<File>();
   const [video, setVideo] = useState<File>();
-  const [ipfsHashContract, setIpfsHashContract] =
-    useState<ethers.BaseContract | null>(null);
-  const contractAddress = "0xc4258543178792FAEe014be2bB36A09429AFE3c5";
+
   const [uploading, setUploading] = useState(false);
-  const abi = [
-    {
-      inputs: [
-        {
-          internalType: "string",
-          name: "_hash",
-          type: "string",
-        },
-      ],
-      name: "setHash",
-      outputs: [],
-      stateMutability: "nonpayable",
-      type: "function",
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "_user",
-          type: "address",
-        },
-      ],
-      name: "getHash",
-      outputs: [
-        {
-          internalType: "string",
-          name: "",
-          type: "string",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-    {
-      inputs: [
-        {
-          internalType: "address",
-          name: "",
-          type: "address",
-        },
-      ],
-      name: "user_hash",
-      outputs: [
-        {
-          internalType: "string",
-          name: "",
-          type: "string",
-        },
-      ],
-      stateMutability: "view",
-      type: "function",
-    },
-  ];
+  const { user } = useUserStore()
 
-  //   const { addVideo } = useVideoDataStore();
-
-  async function setHash(hash: string) {
-    if (!ipfsHashContract) return console.error("Contract not initialized");
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
-    // Some error
-    const tx = await ipfsHashContract.setHash(hash);
-    await tx.wait();
-    console.log(`Hash set to: ${hash}`);
-  }
-
-  useEffect(() => {
-    const privateKey = import.meta.env.VITE_METAMASK_PVT_KEY;
-    const provider = new ethers.providers.JsonRpcProvider(
-      "https://mevm.devnet.m1.movementlabs.xyz"
-    );
-    const wallet = new ethers.Wallet(privateKey, provider);
-    setIpfsHashContract(new ethers.Contract(contractAddress, abi, wallet));
-  }, []);
 
   const thumbnailSubmit = async () => {
     const formData = new FormData();
     if (!thumbnail) return;
     formData.append("thumbnail", thumbnail);
-
+    console.log(`${import.meta.env.VITE_BACKEND_URI}/video/uploadThumbnail/${title}/${description}/${paid}/${fees}`)
     const res = await axios.post(
-      `${
-        import.meta.env.VITE_BACKEND_URI
-      }/video/uploadThumbnail/${title}/${description}`,
+      `${import.meta.env.VITE_BACKEND_URI}/video/uploadThumbnail/${title}/${description}/${paid}/${fees}`,
       formData,
       {
         headers: {
@@ -125,8 +54,54 @@ export default function UploadVideoCard() {
     );
     return res.data.data.id;
   };
+
+
+  const callContract = async (hash: string, videoId: number) => {
+    try {
+      const { request, result } = await simulateContract(config, {
+        abi: videoABI,
+        address: VIDEO,
+        functionName: "uploadVideo",
+        args: [
+          hash,
+          BigInt(fees * 10 ** 18),
+          paid
+        ],
+      }
+      )
+      const txhash = writeContract(config, request)
+        .then(async (_) => {
+          const blockChainId = Number(result);
+          try {
+            const res = await axios.post(updateBlockChainData, {
+              videoId,
+              blockChainId
+            }, {
+              withCredentials: true
+            })
+            toast({
+              description: "Video Uploaded successfully" + txhash,
+            })
+          } catch (err) {
+            const del = await axios.delete(deleteVideo(videoId), {
+              withCredentials: true
+            })
+            toast({ description: "Error updating blockchain id. Please upload video again", variant: "destructive" });
+            console.error(err);
+          }
+
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+      toast({ description: "Transaction submitted: " + hash });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+
   const videoSubmit = async (val: number) => {
-    setUploading(true);
     const formData = new FormData();
     if (!video) return;
     formData.append("video", video);
@@ -140,8 +115,8 @@ export default function UploadVideoCard() {
         withCredentials: true,
       }
     );
-    console.log(res);
-    setHash(res.data.hash);
+    if (paid)
+      await callContract(res.data.hash, val)
     toast({
       description: "Video uploaded successfully",
     });
@@ -150,17 +125,21 @@ export default function UploadVideoCard() {
   };
 
   const handleSubmit = async () => {
+    setUploading(true);
     thumbnailSubmit()
       .then(async (val) => {
         await videoSubmit(val);
       })
       .catch((err) => {
         console.log(err);
+      })
+      .finally(() => {
+        setUploading(false);
       });
   };
 
   const [paid, setPaid] = useState(false);
-
+  const [fees, setFees] = useState(0);
   return (
     <Card className="sm:max-w-[500px]">
       <CardHeader>
@@ -170,76 +149,81 @@ export default function UploadVideoCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-      <div className="grid gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="title">Title</Label>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="title">Title</Label>
+            <Input
+              id="title"
+              placeholder="Enter a title"
+              className="w-full"
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              placeholder="Enter a description"
+              className="w-full"
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="thumbnail">Thumbnail</Label>
+            <Input
+              id="thumbnail"
+              type="file"
+              className="w-full"
+              accept=".png,.jpg,.jpeg"
+              onChange={(e) => setThumbnail(e.target.files?.[0])}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="video">Video</Label>
+            <Input
+              id="video"
+              type="file"
+              className="w-full"
+              onChange={(e) => setVideo(e.target.files?.[0])}
+              accept=".mp4"
+            />
+          </div>
+          <div className="my-4">
+            <RadioGroup className="inline-flex gap-4">
+              <div className="flex items-center space-x-1">
+                <RadioGroupItem
+                  onClick={() => setPaid(true)}
+                  value="paid"
+                  id="paid"
+                />
+                <Label htmlFor="paid">Paid</Label>
+              </div>
+              <div className="flex items-center space-x-1">
+                <RadioGroupItem
+                  onClick={() => setPaid(false)}
+                  value="unpaid"
+                  id="unpaid"
+                />
+                <Label htmlFor="unpaid">UnPaid</Label>
+              </div>
+            </RadioGroup>
+          </div>
+        </div>
+
+        <div className="w-full rounded-md bg-accent mb-4 p-4 flex flex-row">
           <Input
             id="title"
-            placeholder="Enter a title"
+            placeholder="Enter cost"
             className="w-full"
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => setFees(Number(e.target.value))}
+            disabled={!paid}
           />
         </div>
-        <div className="grid gap-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            placeholder="Enter a description"
-            className="w-full"
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="thumbnail">Thumbnail</Label>
-          <Input
-            id="thumbnail"
-            type="file"
-            className="w-full"
-            accept=".png,.jpg,.jpeg"
-            onChange={(e) => setThumbnail(e.target.files?.[0])}
-          />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="video">Video</Label>
-          <Input
-            id="video"
-            type="file"
-            className="w-full"
-            onChange={(e) => setVideo(e.target.files?.[0])}
-            accept=".mp4"
-          />
-        </div>
-        <div className="my-4">
-          <RadioGroup className="inline-flex gap-4">
-            <div className="flex items-center space-x-1">
-              <RadioGroupItem
-                onClick={() => setPaid(true)}
-                value="paid"
-                id="paid"
-              />
-              <Label htmlFor="paid">Paid</Label>
-            </div>
-            <div className="flex items-center space-x-1">
-              <RadioGroupItem
-                onClick={() => setPaid(false)}
-                value="unpaid"
-                id="unpaid"
-              />
-              <Label htmlFor="unpaid">UnPaid</Label>
-            </div>
-          </RadioGroup>
-        </div>
-      </div>
 
-      <div className="w-full rounded-md bg-accent mb-4 p-4 flex flex-row">
-        <p>Fees</p>
-        <p className="ml-auto">{paid ? "~ 0.007" : "0.00"} UBIT</p>
-      </div>
-
-      <Button disabled={uploading} onClick={handleSubmit} className="w-full">
-        {uploading ? <Spinner className="w-4 h-4" /> : "Upload"}
-      </Button>
+        <Button disabled={uploading} onClick={handleSubmit} className="w-full">
+          {uploading ? <Spinner className="w-4 h-4" /> : "Upload"}
+        </Button>
       </CardContent>
     </Card>
   );

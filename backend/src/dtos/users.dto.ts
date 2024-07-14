@@ -4,8 +4,11 @@ export class CreateUserDto {
   @IsEmail()
   public email: string;
 
-
   @IsString()
   @IsNotEmpty()
   public username: string;
+
+  @IsString()
+  @IsNotEmpty()
+  public walletAddress: string;
 }

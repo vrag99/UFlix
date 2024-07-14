@@ -1,3 +1,4 @@
+import { HttpException } from '@/exceptions/HttpException';
 import { PrismaClient } from '@prisma/client';
 import { Service } from 'typedi';
 
@@ -5,8 +6,9 @@ import { Service } from 'typedi';
 export class VideoService {
   public video = new PrismaClient().video;
   public comment = new PrismaClient().comment;
+  public like = new PrismaClient().like;
 
-  public async uploadVideo(thumbnail: string, userId: number, title: string, description: string): Promise<any> {
+  public async uploadVideo(thumbnail: string, userId: number, title: string, description: string,paid:boolean,walletAddress:string,username:string,fees:number): Promise<any> {
     const createVideoData: any = await this.video.create({
       data: {
         ipfsHashThumbnail: thumbnail,
@@ -14,6 +16,10 @@ export class VideoService {
         blockChainId: 0,
         Description: description,
         Title: title,
+        paid,
+        walletAddress,
+        username,
+        fees
       },
     });
     return createVideoData;
@@ -24,9 +30,28 @@ export class VideoService {
     return updateVideoData;
   }
 
-  public async updateLikeByOne(videoId: number): Promise<any> {
+  public async updateLikeByOne(videoId: number,inc:boolean,userId:number): Promise<any> {
     const video = await this.video.findUnique({ where: { id: videoId } });
-    const updateVideoData = await this.video.update({ where: { id: videoId }, data: { likeCount: video.likeCount + 1 } });
+    if(inc){
+    const like = await this.like.create({
+      data:{
+        userId:userId,
+        videoId:videoId
+      }
+    })
+    if(!like)
+      throw new HttpException(400, 'Already liked');
+    }else{
+      const like = await this.like.delete({
+        where:{
+          videoId_userId:{
+            userId:userId,
+            videoId:videoId
+          }
+        }
+      })
+    }
+    const updateVideoData = await this.video.update({ where: { id: videoId }, data: { likeCount: inc? video.likeCount + 1 : video.likeCount - 1 } });
     return updateVideoData;
   }
 
@@ -49,5 +74,18 @@ export class VideoService {
   public async getVideos(): Promise<any> {
     const videos = await this.video.findMany();
     return videos;
+  }
+
+  public async getVideoById(videoId: number): Promise<any> {
+    const video = await this.video.findUnique({ where: { id: videoId } });
+    if(!video) {
+      throw new HttpException(404, 'Video not found');
+    }
+    return video;
+  }
+
+  public async deleteVideos(): Promise<any> {
+    const deleteVideos = await this.video.deleteMany();
+    return deleteVideos;
   }
 }

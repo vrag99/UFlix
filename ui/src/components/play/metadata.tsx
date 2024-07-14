@@ -2,18 +2,38 @@ import createWeb3Avatar from "web3-avatar";
 import { useEffect } from "react";
 import Heart from "react-animated-heart";
 import { useState } from "react";
+import axios from "axios";
+import { LIKE_VIDEO } from "@/lib/endpoints";
 
 interface MetadataProps {
   title: string;
   description: string;
   username: string;
   address: string;
-  likes: number;
+  likeCount: number;
+  videoId: number;
 }
 
 export default function MetaData(props: MetadataProps) {
   const [isClick, setClick] = useState(false);
-  const [likes, setLikes] = useState(props.likes);
+  const [likeCount, setlikeCount] = useState(props.likeCount);
+  const handleHeartClick = () => {
+    const prevState = isClick;
+    if (prevState) {
+      setlikeCount(likeCount - 1);
+    } else {
+      setlikeCount(likeCount + 1);
+    }
+    setClick(!prevState);
+  }
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      const res = await axios.post(LIKE_VIDEO(props.videoId))
+    }, 750)
+
+    return () => clearTimeout(delayDebounceFn)
+  }, [isClick])
+
   useEffect(() => {
     createWeb3Avatar("#play-avatar", props.address);
   }, []);
@@ -30,14 +50,9 @@ export default function MetaData(props: MetadataProps) {
           <div className="flex flex-row items-center">
             <Heart
               isClick={isClick}
-              onClick={() => {
-                if (!isClick) {
-                  setClick(true);
-                  setLikes(likes + 1);
-                }
-              }}
+              onClick={handleHeartClick}
             />
-            <p>{likes} likes</p>
+            <p>{likeCount} likes</p>
           </div>
         </div>
       </div>

@@ -35,7 +35,6 @@ export function Sidebar() {
               <img src={logo} alt="Brand" className="w-20" />
             </div>
           </Link>
-
         </Button>
         <Menu isOpen={sidebar?.isOpen} />
       </div>

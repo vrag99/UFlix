@@ -1,10 +1,10 @@
 import { create } from 'zustand'
 import { type video } from '@/lib/types'
-import { videoData } from '@/components/videos/video-data'
 
 interface User {
     id: number,
-    username: string
+    username: string,
+    walletAddress: string,
 }
 
 interface UserState {
@@ -30,8 +30,3 @@ interface VideoDataState {
     videos: video[],
     addVideo: (video: video) => void
 }
-
-export const useVideoDataStore = create<VideoDataState>((set) => ({
-    videos: videoData,
-    addVideo: (video: video) => set((state) => ({ videos: [...state.videos, video] })),
-}))

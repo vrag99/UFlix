@@ -28,7 +28,7 @@ export class AuthService {
     const findUser: User = await this.users.findUnique({ where: { email: userData.email } });
 
     if (findUser) throw new HttpException(409, `This email ${userData.email} already exists`);
-
+    console.log("userdata",userData)
     const createUserData: Promise<User> = this.users.create({ data: { ...userData } });
 
     return createUserData;

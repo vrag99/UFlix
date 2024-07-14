@@ -46,6 +46,7 @@ export default function SignUp(props: SignUpProps) {
       .post(SIGNUP_API, {
         email: props.email,
         username: username,
+        walletAddress: address,
       })
       .then((res) => {
         console.log(res);
@@ -84,19 +85,20 @@ export default function SignUp(props: SignUpProps) {
           });
       })
       .catch((err) => {
-        if (err.response.status === 409) {
-          toast({
-            title: "Uh oh!",
-            description: "An account with this email already exists.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Uh oh!",
-            description: "An error occurred while creating your account.",
-            variant: "destructive",
-          });
-        }
+        // if (err.response.status === 409) {
+        //   toast({
+        //     title: "Uh oh!",
+        //     description: "An account with this email already exists.",
+        //     variant: "destructive",
+        //   });
+        // } else {
+        //   toast({
+        //     title: "Uh oh!",
+        //     description: "An error occurred while creating your account.",
+        //     variant: "destructive",
+        //   });
+        // }
+        console.log(err)
       })
       .finally(() => {
         setIsLoading(false);

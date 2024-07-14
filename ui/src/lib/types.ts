@@ -1,16 +1,17 @@
 export interface video {
-    id: string;
-    title: string;
-    description: string;
-    type: 'free' | 'paid',
+    id: number;
+    Title: string;
+    Description: string;
     price?: number;
     tag: string;
-    thumbnail: string;
-    ipfsHash: string;
-    likes: number;
+    ipfsHashThumbnail: string;
+    likeCount: number;
     comments: comment[];
     username: string;
-    address: string;
+    walletAddress: string;
+    blockChainId: number;
+    paid : boolean;
+    fees:number;
 }
 
 export interface comment {
